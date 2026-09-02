@@ -33,18 +33,20 @@ struct Genome {
 	bool reading{ false };
 
 	for (size_t i{ 0 }; i < sizeof(dna); ++i) {
-		if (reading && bytes[i] == marker.stop) {
-			reading = false;
-			result.data.push_back(segment);
-			segment = 0;
-			shift = 0;
+		if (reading) {
+			if (bytes[i] == marker.stop) {
+				reading = false;
+				result.data.push_back(segment);
+				segment = 0;
+				shift = 0;
+			}
+			else {
+				segment += static_cast<uint64_t>(bytes[i]) << shift * 8;
+				++shift;
+			}
 		}
 		else if (bytes[i] == marker.start) {
 			reading = true;
-		}
-		else {
-			segment += static_cast<uint64_t>(bytes[i]) << shift * 8;
-			++shift;
 		}
 	}
 
