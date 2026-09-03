@@ -4,14 +4,14 @@
 
 ftxui::Element docu_rnd_dna();
 ftxui::Element docu_test_genome();
-ftxui::Element docu_valid_genomes();
+ftxui::Element docu_interpret_genome();
 
 int main()
 {
     auto screen = ftxui::Screen::Create(ftxui::Dimension::Full());
     //ftxui::Render(screen, docu_rnd_dna());
     //ftxui::Render(screen, docu_test_genome());
-    ftxui::Render(screen, docu_valid_genomes());
+    ftxui::Render(screen, docu_interpret_genome());
     screen.Print();
 
     return 0;
@@ -42,8 +42,8 @@ int main()
 
     Genome test_genome{ interpret_dna(test_dna, marker) };
     Elements test_text{ };
-    for (size_t i = 0; i < test_genome.data.size(); ++i) {
-        test_text.push_back(text(dna_to_hex(test_genome.data[i])) | border | color(Color::Green));
+    for (size_t i = 0; i < test_genome.bytes.size(); ++i) {
+        test_text.push_back(text(dna_to_hex(test_genome.bytes[i])) | border | color(Color::Green));
     }
     return vbox({
             text("Test DNA"),
@@ -51,22 +51,17 @@ int main()
     });
 }
 
-[[nodiscard]] ftxui::Element docu_valid_genomes() {
+[[nodiscard]] ftxui::Element docu_interpret_genome() {
     using namespace ftxui;
     const SegmentMarker marker{ .start = 1u, .stop = 2u };
     DNA dna{ };
     Genome genome{ };
     size_t counter{ };
 
-    while (genome.data.empty()) {
+    while (!genome.debug) {
         dna = random_dna();
         genome = interpret_dna(dna, marker);
         ++counter;
-    }
-
-    Elements genome_text{ };
-    for (size_t i = 0; i < genome.data.size(); ++i) {
-        genome_text.push_back(text(dna_to_hex(genome.data[i])) | border | color(Color::Green));
     }
 
     return vbox({
@@ -74,7 +69,7 @@ int main()
                 text("start  " + std::format("{:02X} ", marker.start)) | border, 
                 text("stop   " + std::format("{:02X} ", marker.stop)) | border 
             }),
-            hbox({ text("DNA    " + dna_to_hex(dna)) | border, hbox(genome_text) }),
+            hbox({ text("DNA    " + dna_to_hex(dna)) | border, text(genome_to_hex(genome)) | border | color(Color::Green)}),
             text("counter: " + std::to_string(counter))
     });
 }

@@ -16,7 +16,8 @@ struct SegmentMarker {
 };
 
 struct Genome {
-	std::vector<uint64_t> data;
+	bool debug;
+	std::vector<uint8_t> bytes;
 };
 
 [[nodiscard]] DNA random_dna() {
@@ -26,31 +27,33 @@ struct Genome {
 }
 
 [[nodiscard]] Genome interpret_dna(DNA dna, SegmentMarker marker) {
-	Genome result{ };
+	Genome genome{  };
+	genome.bytes.resize(sizeof(DNA), 0);
 	auto bytes = std::bit_cast<std::array<uint8_t, sizeof(DNA)>>(dna);
-	uint64_t segment{ 0 };
-	int shift{ 0 };
+	size_t size{ 0 };
+	size_t start_frame{ 0 };
+	size_t dest_offset{ 0 };
 	bool reading{ false };
 
 	for (size_t i{ 0 }; i < sizeof(dna); ++i) {
 		if (reading) {
 			if (bytes[i] == marker.stop) {
+				std::memcpy(genome.bytes.data() + dest_offset, bytes.data() + start_frame + 1, size);
+				dest_offset += size;
 				reading = false;
-				result.data.push_back(segment);
-				segment = 0;
-				shift = 0;
+				genome.debug = true;
 			}
 			else {
-				segment += static_cast<uint64_t>(bytes[i]) << shift * 8;
-				++shift;
+				++size;
 			}
 		}
 		else if (bytes[i] == marker.start) {
 			reading = true;
+			start_frame = i;
 		}
 	}
 
-	return result;
+	return genome;
 }
 
 [[nodiscard]] std::string dna_to_hex(DNA dna) {
@@ -60,6 +63,16 @@ struct Genome {
 	for (size_t i{ 0 }; i < sizeof(dna); ++i) {
 
 		result += std::format("{:02X} ", bytes[i]);
+	}
+
+	return result;
+}
+
+[[nodiscard]] std::string genome_to_hex(Genome genome) {
+	std::string result{ "" };
+
+	for (auto byte : genome.bytes) {
+		result += std::format("{:02X} ", byte);
 	}
 
 	return result;
