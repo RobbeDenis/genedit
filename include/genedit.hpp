@@ -7,8 +7,11 @@
 #include <bit>
 #include <string>
 #include <format>
+#include <algorithm>
 
-using DNA = uint64_t;
+struct DNA {
+	std::vector<uint8_t> bytes;
+};
 
 struct SegmentMarker {
 	uint8_t start;
@@ -20,25 +23,25 @@ struct Genome {
 	std::vector<uint8_t> bytes;
 };
 
-[[nodiscard]] DNA random_dna() {
+[[nodiscard]] std::vector<uint8_t> random_dna(const size_t size) {
 	static std::mt19937 gen(std::random_device{}());
-	std::uniform_int_distribution<uint64_t> dna_dist(0ull);
-	return DNA{ dna_dist(gen) };
+	std::uniform_int_distribution<uint16_t> dna_dist(0ull);
+	std::vector<uint8_t> dna(size);
+	std::ranges::generate(dna, [&]() { return static_cast<uint8_t>(dna_dist(gen)); });
+	return dna;
 }
 
-[[nodiscard]] Genome interpret_dna(DNA dna, SegmentMarker marker) {
-	Genome genome{  };
-	genome.bytes.resize(sizeof(DNA), 0);
-	auto bytes = std::bit_cast<std::array<uint8_t, sizeof(DNA)>>(dna);
+[[nodiscard]] Genome interpret_dna(const DNA& dna, const SegmentMarker marker) {
+	Genome genome{ .bytes = std::vector<uint8_t>(dna.bytes.size(), 0) };
 	size_t size{ 0 };
 	size_t start_frame{ 0 };
 	size_t dest_offset{ 0 };
 	bool reading{ false };
 
-	for (size_t i{ 0 }; i < sizeof(dna); ++i) {
+	for (size_t i{ 0 }; i < dna.bytes.size(); ++i) {
 		if (reading) {
-			if (bytes[i] == marker.stop) {
-				std::memcpy(genome.bytes.data() + dest_offset, bytes.data() + start_frame + 1, size);
+			if (dna.bytes[i] == marker.stop) {
+				std::memcpy(genome.bytes.data() + dest_offset, dna.bytes.data() + start_frame + 1, size);
 				dest_offset += size;
 				reading = false;
 				genome.debug = true;
@@ -47,31 +50,20 @@ struct Genome {
 				++size;
 			}
 		}
-		else if (bytes[i] == marker.start) {
+		else if (dna.bytes[i] == marker.start) {
 			reading = true;
 			start_frame = i;
 		}
 	}
 
+	genome.bytes.resize(size);
 	return genome;
 }
 
-[[nodiscard]] std::string dna_to_hex(DNA dna) {
-	auto bytes = std::bit_cast<std::array<uint8_t, sizeof(DNA)>>(dna);
+[[nodiscard]] std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
 	std::string result{ "" };
 
-	for (size_t i{ 0 }; i < sizeof(dna); ++i) {
-
-		result += std::format("{:02X} ", bytes[i]);
-	}
-
-	return result;
-}
-
-[[nodiscard]] std::string genome_to_hex(Genome genome) {
-	std::string result{ "" };
-
-	for (auto byte : genome.bytes) {
+	for (auto byte : bytes) {
 		result += std::format("{:02X} ", byte);
 	}
 
