@@ -1,11 +1,17 @@
 #include "genedit.hpp"
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include <ftxui/ftxui.hpp>
 
 ftxui::Element docu_dna_to_genome();
 
 int main()
 {
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     auto screen = ftxui::Screen::Create(ftxui::Dimension::Full());
     ftxui::Render(screen, docu_dna_to_genome());
     screen.Print();
@@ -20,7 +26,7 @@ int main()
     Genome genome{ };
     size_t counter{ };
 
-    while (!genome.debug) {
+    while (genome.bytes.empty()) {
         dna = { .bytes = random_dna(16) };
         genome = interpret_dna(dna, marker);
         ++counter;
