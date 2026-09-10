@@ -2,8 +2,6 @@
 
 #include "genedit.hpp"
 
-static constexpr SegmentMarker SlimeSM = { .start = 16, .stop = 64 };
-
 struct RGB {
 	uint8_t r;
 	uint8_t g;
@@ -16,6 +14,11 @@ struct SlimeGenome {
 };
 
 struct Slime {
+	static constexpr SegmentMarker SM = { .start = 16, .stop = 64 };
+	static constexpr size_t DNA_SIZE = { 16 };
+
 	DNA dna;
 	SlimeGenome genome;
+	bool _debug;
 };
+

@@ -12,6 +12,10 @@
 #include <ranges>
 #include <generator>
 #include <span>
+#include <type_traits>
+
+template<typename T>
+concept is_genome = std::is_trivially_constructible_v<T>;
 
 struct DNA {
 	std::vector<uint8_t> bytes;
@@ -65,35 +69,64 @@ size_t map_dna_to_genome(const DNA& dna, const genome_data_t genome, const Segme
 	return genome_size;
 }
 
-[[nodiscard]] Genome interpret_dna(const DNA& dna, const SegmentMarker marker) {
+[[nodiscard]] Genome interpret_dna_man(const DNA& dna, const SegmentMarker marker) {
 	Genome genome{ .bytes = std::vector<uint8_t>(dna.bytes.size(), 0u) };
 	size_t size{ 0 };
 	size_t start_frame{ 0 };
 	size_t dest_offset{ 0 };
 	bool reading{ false };
 
-	//for (size_t i{ 0 }; i < dna.bytes.size(); ++i) {
-	//	if (reading) {
-	//		if (dna.bytes[i] == marker.stop) {
-	//			std::memcpy(genome.bytes.data() + dest_offset, dna.bytes.data() + start_frame + 1, size);
-	//			dest_offset += size;
-	//			reading = false;
-	//			genome.debug = true;
-	//		}
-	//		else {
-	//			++size;
-	//		}
-	//	}
-	//	else if (dna.bytes[i] == marker.start) {
-	//		reading = true;
-	//		start_frame = i;
-	//	}
-	//}
-
-	size = map_dna_to_genome(dna, genome.bytes, marker);
+	for (size_t i{ 0 }; i < dna.bytes.size(); ++i) {
+		if (reading) {
+			if (dna.bytes[i] == marker.stop) {
+				std::memcpy(genome.bytes.data() + dest_offset, dna.bytes.data() + start_frame + 1, size);
+				dest_offset += size;
+				reading = false;
+				genome.debug = true;
+			}
+			else {
+				++size;
+			}
+		}
+		else if (dna.bytes[i] == marker.start) {
+			reading = true;
+			start_frame = i;
+		}
+	}
 
 	genome.bytes.resize(size);
 	return genome;
+}
+
+[[nodiscard]] Genome interpret_dna_gen(const DNA& dna, const SegmentMarker marker) {
+	Genome genome{ .bytes = std::vector<uint8_t>(dna.bytes.size(), 0u) };
+	size_t size{ map_dna_to_genome(dna, genome.bytes, marker) };
+	genome.bytes.resize(size);
+	return genome;
+}
+
+template<is_genome T>
+bool interpret_dna_raw(const DNA& dna, T* const genome, const SegmentMarker marker) {
+	size_t write_offset{ 0 };
+	for (auto segment : between_markers(dna.bytes, marker)) {
+		std::memcpy(&genome + write_offset, segment.data(), segment.size());
+		write_offset += segment.size();
+	}
+
+	return write_offset == 0;
+}
+
+template<is_genome T>
+bool interpret_dna_checked(const DNA& dna, T *const genome, const SegmentMarker marker) {
+	size_t write_offset{ 0 };
+	for (auto segment : between_markers(dna.bytes, marker)) {
+		const size_t delta_offset{ sizeof(T) - write_offset };
+		const size_t checked_size{ segment.size() > delta_offset ? delta_offset : segment.size() };
+		std::memcpy(genome + write_offset, segment.data(), checked_size * sizeof(uint8_t));
+		write_offset += checked_size;
+	}
+
+	return write_offset == 0;
 }
 
 [[nodiscard]] std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
@@ -101,6 +134,16 @@ size_t map_dna_to_genome(const DNA& dna, const genome_data_t genome, const Segme
 
 	for (auto byte : bytes) {
 		result += std::format("{:02X} ", byte);
+	}
+
+	return result;
+}
+
+[[nodiscard]] std::string bytes_to_dec(const std::vector<uint8_t>& bytes) {
+	std::string result{ "" };
+
+	for (auto byte : bytes) {
+		result += std::format("{} ", byte);
 	}
 
 	return result;
