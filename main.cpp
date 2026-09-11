@@ -64,7 +64,7 @@ int main()
         hbox({ text("r: " + std::to_string(slime.genome.color.r)) | border | color(Color::Red),
             text("g: " + std::to_string(slime.genome.color.g)) | border | color(Color::Green),
             text("b: " + std::to_string(slime.genome.color.b)) | border | color(Color::Blue),
-            gauge(0.1) | color(ftxui::Color{slime.genome.color.r, slime.genome.color.g, slime.genome.color.b })}),
+            gauge(0.1f) | color(ftxui::Color{slime.genome.color.r, slime.genome.color.g, slime.genome.color.b })}),
         hbox({ text("size: " + std::to_string(slime.genome.size)) | border | color(Color::White)}),
         text("counter: " + std::to_string(counter))
         });

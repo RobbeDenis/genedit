@@ -1,34 +1,48 @@
 ﻿# CMakeList.txt : CMake project for genedit, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.14)
+cmake_minimum_required(VERSION 3.14)
+project("genedit")
 
-# Enable Hot Reload for MSVC compilers if supported.
-# if (POLICY CMP0141)
-#   cmake_policy(SET CMP0141 NEW)
-#   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-# endif()
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project ("genedit")
-
-add_executable(genedit 
-    "main.cpp"
-)
-
-target_include_directories(genedit PRIVATE 
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-
-set_property(TARGET genedit PROPERTY CXX_STANDARD 23)
-
-# Fetch FTXUI
+# --- Third-party dependancies ---
 include(FetchContent)
+
+# FTXUI
 FetchContent_Declare(ftxui
-  GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG v7.0.3
+    GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
+    GIT_TAG v7.0.3
 )
 FetchContent_MakeAvailable(ftxui)
 
-target_link_libraries(genedit PRIVATE
+# --- Setup genedit as library ---
+file(GLOB_RECURSE GENEDIT_SOURCES "src/*.cpp")
+add_library(genedit_lib ${GENEDIT_SOURCES})
+target_include_directories(genedit_lib PUBLIC 
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/genedit"
+)
+
+# --- Project executable ---
+add_executable(genedit main.cpp)
+target_link_libraries(genedit PRIVATE 
+    genedit_lib
     ftxui::ftxui
 )
+
+# --- Testing ---
+include(CTest)
+
+if(BUILD_TESTING)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest
+        GIT_TAG v1.18.0
+    )
+ # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    add_subdirectory(tests)
+endif()
