@@ -40,9 +40,25 @@ if(BUILD_TESTING)
         GIT_REPOSITORY https://github.com/google/googletest
         GIT_TAG v1.18.0
     )
- # For Windows: Prevent overriding the parent project's compiler/linker settings
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
 
     add_subdirectory(tests)
+endif()
+
+# --- Benchmarking ---
+option(BUILD_BENCHMARKS "Build benchmark executables" ON)
+
+if(BUILD_BENCHMARKS)
+    FetchContent_Declare(
+        benchmark
+        GIT_REPOSITORY https://github.com/google/benchmark
+        GIT_TAG v1.9.5
+    )
+    # Disable internal benchmark tests
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(benchmark)
+
+    add_subdirectory(benchmarks)
 endif()
