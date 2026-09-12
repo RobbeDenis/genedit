@@ -19,6 +19,15 @@ struct Slime {
 
 	DNA dna;
 	SlimeGenome genome;
-	bool _debug;
 };
 
+struct SlimeGenomePadded {
+	RGB color;
+	uint8_t size;
+	uint8_t _padding[12];
+};
+
+struct SlimePadded {
+	DNA dna;
+	SlimeGenomePadded genome;
+};

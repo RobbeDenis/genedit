@@ -33,7 +33,7 @@ struct Genome {
 
 using genome_data_t = std::span<uint8_t>;
 
-[[nodiscard]] std::vector<uint8_t> random_dna(const size_t size) {
+static [[nodiscard]] std::vector<uint8_t> random_dna(const size_t size) {
 	static std::mt19937 gen(std::random_device{}());
 	std::uniform_int_distribution<uint16_t> dna_dist(0u);
 	std::vector<uint8_t> dna(size);
@@ -42,7 +42,7 @@ using genome_data_t = std::span<uint8_t>;
 }
 
 template <typename T>
-std::generator<std::ranges::subrange<std::ranges::iterator_t<T>>> between_markers(T& range, const SegmentMarker marker) {
+inline std::generator<std::ranges::subrange<std::ranges::iterator_t<T>>> between_markers(T& range, const SegmentMarker marker) {
 	auto it = std::ranges::begin(range);
 	auto end = std::ranges::end(range);
 
@@ -60,7 +60,7 @@ std::generator<std::ranges::subrange<std::ranges::iterator_t<T>>> between_marker
 	}
 }
 
-size_t map_dna_to_genome(const DNA& dna, const genome_data_t genome, const SegmentMarker marker) {
+inline size_t map_dna_to_genome(const DNA& dna, const genome_data_t genome, const SegmentMarker marker) {
 	size_t genome_size{ };
 	for (auto segment : between_markers(dna.bytes, marker)) {
 		std::memcpy(genome.data() + genome_size, segment.data(), segment.size());
@@ -69,7 +69,7 @@ size_t map_dna_to_genome(const DNA& dna, const genome_data_t genome, const Segme
 	return genome_size;
 }
 
-[[nodiscard]] Genome interpret_dna_man(const DNA& dna, const SegmentMarker marker) {
+inline [[nodiscard]] Genome interpret_dna_man(const DNA& dna, const SegmentMarker marker) {
 	Genome genome{ .bytes = std::vector<uint8_t>(dna.bytes.size(), 0u) };
 	size_t size{ 0 };
 	size_t start_frame{ 0 };
@@ -98,7 +98,7 @@ size_t map_dna_to_genome(const DNA& dna, const genome_data_t genome, const Segme
 	return genome;
 }
 
-[[nodiscard]] Genome interpret_dna_gen(const DNA& dna, const SegmentMarker marker) {
+inline [[nodiscard]] Genome interpret_dna_gen(const DNA& dna, const SegmentMarker marker) {
 	Genome genome{ .bytes = std::vector<uint8_t>(dna.bytes.size(), 0u) };
 	size_t size{ map_dna_to_genome(dna, genome.bytes, marker) };
 	genome.bytes.resize(size);
@@ -109,7 +109,7 @@ template<is_genome T>
 bool interpret_dna_raw(const DNA& dna, T* const genome, const SegmentMarker marker) {
 	size_t write_offset{ 0 };
 	for (auto segment : between_markers(dna.bytes, marker)) {
-		std::memcpy(&genome + write_offset, segment.data(), segment.size());
+		std::memcpy(genome + write_offset, segment.data(), segment.size());
 		write_offset += segment.size();
 	}
 
@@ -129,7 +129,7 @@ bool interpret_dna_checked(const DNA& dna, T *const genome, const SegmentMarker 
 	return write_offset == 0;
 }
 
-[[nodiscard]] std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
+inline [[nodiscard]] std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
 	std::string result{ "" };
 
 	for (auto byte : bytes) {
@@ -139,7 +139,7 @@ bool interpret_dna_checked(const DNA& dna, T *const genome, const SegmentMarker 
 	return result;
 }
 
-[[nodiscard]] std::string bytes_to_dec(const std::vector<uint8_t>& bytes) {
+inline [[nodiscard]] std::string bytes_to_dec(const std::vector<uint8_t>& bytes) {
 	std::string result{ "" };
 
 	for (auto byte : bytes) {
