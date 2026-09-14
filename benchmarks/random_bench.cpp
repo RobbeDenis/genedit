@@ -6,7 +6,7 @@ static void BM_RandomDNA(benchmark::State& state) {
     const size_t size{ 32 };
 
     for (auto _ : state) {
-        DNA dna{ .bytes{ random_dna(size) } };
+        genedit::DNA dna{ .bytes{ genedit::random_dna(size) } };
         benchmark::DoNotOptimize(dna);
     }
 }
